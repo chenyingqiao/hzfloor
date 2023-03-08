@@ -10,7 +10,7 @@
 				"type": "python",
 				"request": "launch",
 				"cwd": "${workspaceRoot}",
-				"python": "/usr/bin/python",
+				"python": "/usr/local/bin/python3.9",
 				"stopOnEntry": true,
 				"console": "externalTerminal",
 				"debugOptions": [],
