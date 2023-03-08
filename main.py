@@ -1,6 +1,8 @@
 # coding: utf-8
+from codecs import decode
 import json
 import re
+import os
 from datetime import datetime
 
 import requests
@@ -123,28 +125,47 @@ def getXiaokong(text):
     return result
 
 
-def getAllXiaokong(projectData):
+def getAllXiaokongToDisk(projectData):
     for item in range(len(projectData)):
         page = requests.get(projectData[item]["detail_url"])
         projectData[item]["xiaokong"] = getXiaokong(page.text)
-    current_datatime = datetime.now()
-    f = open("./project-{0}{1}{2}.json".format(current_datatime.year,
-             current_datatime.month, current_datatime.day), 'w+')
-    f.write(json.dumps(projectData, ensure_ascii=False))
-    f.close()
     return projectData
 
 
-def readFile(path):
+def writeFile(path, content):
     f = open(path)
+    f.write(content)
+    f.close()
+
+
+def readFile(path):
+    f = open(path, "+w")
     content = f.read()
     f.close()
     return content
 
 
-getAllXiaokong(
+def collectionData(data):
+    current_datatime = datetime.now()
+    todayPath = "./project-{0}{1}{2}.json".format(current_datatime.year,
+                                                  current_datatime.month, current_datatime.day), json.dumps(data, ensure_ascii=False)
+    yestodayPath = ""
+    content = ""
+    projectCollection = {}
+    for item in data:
+        projectCollection["{0}{1}".format(item["project_name"], item["floor"])] = projectCollection["{0}{1}".format(
+            item["project_name"], item["floor"])] + 1
+        # 读取并比对现在的数据
+    if os.path.exists(yestodayPath):
+        yestodayData = json.loads(readFile(yestodayPath))
+    # 写入今天的数据
+    writeFile(todayPath, json.dumps(data, ensure_ascii=False))
+    return
+
+
+data = getAllXiaokongToDisk(
     getALLProjectInfomationAddSaveToDisk(
         xslpAllLink()
     )
 )
-#sendRobot("\n".join(str(x) for x in allLinks))
+# sendRobot("\n".join(str(x) for x in allLinks))
