@@ -1,19 +1,19 @@
 # coding: utf-8
 from codecs import decode
-import json
-import re
-import os
 from datetime import datetime
+import json
+import os
+import re
 
-import requests
 from bs4 import BeautifulSoup
+import requests
 
 
 def sendRobot(content):
     url = 'https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=c97d5b18-7d37-4998-a882-5d8ef63f11e9'
     data = {
-        "msgtype": "text",
-        "text": {
+        "msgtype": "markdown",
+        "markdown": {
             "content": content
         }
     }
@@ -31,7 +31,7 @@ def xslpAllLink():
         totelPageNumber = searchObj[0]
         print("开始解析现售楼盘列表......\n")
         print("共{0}页\n".format(totelPageNumber))
-        totelPageNumber = 2
+        # totelPageNumber = 2
         for pageNumber in range(1, int(totelPageNumber)):
             print("解析第{0}页\n".format(pageNumber))
             page = requests.post(url, {
@@ -133,7 +133,7 @@ def getAllXiaokongToDisk(projectData):
 
 
 def writeFile(path, content):
-    f = open(path)
+    f = open(path,"w+")
     f.write(content)
     f.close()
 
@@ -148,14 +148,27 @@ def readFile(path):
 def collectionData(data):
     current_datatime = datetime.now()
     todayPath = "./project-{0}{1}{2}.json".format(current_datatime.year,
-                                                  current_datatime.month, current_datatime.day), json.dumps(data, ensure_ascii=False)
+                                                  current_datatime.month, current_datatime.day)
     yestodayPath = ""
-    content = ""
+    content = "今日{0}年{1}月{2}日楼盘数据\n".format(current_datatime.year,
+                                                  current_datatime.month, current_datatime.day)
     projectCollection = {}
     for item in data:
-        projectCollection["{0}{1}".format(item["project_name"], item["floor"])] = projectCollection["{0}{1}".format(
-            item["project_name"], item["floor"])] + 1
-        # 读取并比对现在的数据
+        for xk in item["xiaokong"]:
+            ckey = "{0}{1}".format(item["project_name"], item["floor"])
+            if ckey not in projectCollection:
+                projectCollection[ckey] = {
+                    "number": 0,
+                    "url": "",
+                }
+            if xk["state"] == "可售":
+                projectCollection[ckey]["number"] = projectCollection[ckey]["number"] + 1    # 读取并比对现在的数据
+                projectCollection[ckey]["url"] = item["detail_url"] 
+    [(k,projectCollection[k]) for k in sorted(projectCollection.keys())]
+    for key in projectCollection.keys():
+        content+="# [{0}]({1}) \n可售套数{2}\n".format(key,projectCollection[key]["url"],projectCollection[key]["number"])
+    
+    sendRobot(content=content)
     if os.path.exists(yestodayPath):
         yestodayData = json.loads(readFile(yestodayPath))
     # 写入今天的数据
@@ -168,4 +181,5 @@ data = getAllXiaokongToDisk(
         xslpAllLink()
     )
 )
+collectionData(data)
 # sendRobot("\n".join(str(x) for x in allLinks))
