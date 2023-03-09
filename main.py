@@ -152,6 +152,8 @@ def collectionData(data):
                                                   current_datatime.month, current_datatime.day)
     yestodayPath = ""
     content = ""
+    sendRobot("==========今日{0}年{1}月{2}日楼盘数据==========\n".format(current_datatime.year,
+                                                current_datatime.month, current_datatime.day))
     projectCollection = {}
     for item in data:
         for xk in item["xiaokong"]:
@@ -178,6 +180,8 @@ def collectionData(data):
         content = "今日{0}年{1}月{2}日楼盘数据\n".format(current_datatime.year,
                                                 current_datatime.month, current_datatime.day) + content
         sendRobot(content=content)
+    sendRobot("==========今日{0}年{1}月{2}日楼盘数据==========\n".format(current_datatime.year,
+                                                current_datatime.month, current_datatime.day))
     if os.path.exists(yestodayPath):
         yestodayData = json.loads(readFile(yestodayPath))
     # 写入今天的数据
