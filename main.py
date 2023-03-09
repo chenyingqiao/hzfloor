@@ -4,6 +4,7 @@ from datetime import datetime
 import json
 import os
 import re
+import sys
 
 from bs4 import BeautifulSoup
 import requests
@@ -150,8 +151,7 @@ def collectionData(data):
     todayPath = "./project-{0}{1}{2}.json".format(current_datatime.year,
                                                   current_datatime.month, current_datatime.day)
     yestodayPath = ""
-    content = "今日{0}年{1}月{2}日楼盘数据\n".format(current_datatime.year,
-                                                  current_datatime.month, current_datatime.day)
+    content = ""
     projectCollection = {}
     for item in data:
         for xk in item["xiaokong"]:
@@ -166,9 +166,18 @@ def collectionData(data):
                 projectCollection[ckey]["url"] = item["detail_url"] 
     [(k,projectCollection[k]) for k in sorted(projectCollection.keys())]
     for key in projectCollection.keys():
+        if projectCollection[key]["number"] == 0:
+            continue
         content+="# [{0}]({1}) \n可售套数{2}\n".format(key,projectCollection[key]["url"],projectCollection[key]["number"])
-    
-    sendRobot(content=content)
+        if sys.getsizeof(content) >= 3500:
+            content = "今日{0}年{1}月{2}日楼盘数据\n".format(current_datatime.year,
+                                                  current_datatime.month, current_datatime.day) + content
+            sendRobot(content=content)
+            content = ""
+    if content != "":
+        content = "今日{0}年{1}月{2}日楼盘数据\n".format(current_datatime.year,
+                                                current_datatime.month, current_datatime.day) + content
+        sendRobot(content=content)
     if os.path.exists(yestodayPath):
         yestodayData = json.loads(readFile(yestodayPath))
     # 写入今天的数据
