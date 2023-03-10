@@ -32,7 +32,7 @@ def xslpAllLink():
         totelPageNumber = searchObj[0]
         print("开始解析现售楼盘列表......\n")
         print("共{0}页\n".format(totelPageNumber))
-        # totelPageNumber = 2
+        totelPageNumber = 2
         for pageNumber in range(1, int(totelPageNumber)):
             print("解析第{0}页\n".format(pageNumber))
             page = requests.post(url, {
@@ -44,7 +44,11 @@ def xslpAllLink():
             soup = BeautifulSoup(page.text, "html.parser")
             # 找到所有链接
             links = soup.find_all('a')
+            reshow = {}
             for link in links:
+                if link["href"] in reshow.keys():
+                    continue
+                reshow[link["href"]] = True
                 # 打印链接的文本和链接
                 if "realestate" in link['href']:
                     allLinks.append(
@@ -100,12 +104,12 @@ def getALLProjectInfomationAddSaveToDisk(urls):
 def getXiaokong(text):
     print("开始获取销控")
     result = []
-    data = {}
     soup = BeautifulSoup(text, "html.parser")
     allTd = soup.find_all("td", {"width": "180"})
     for td in allTd:
         if not td.find_all("font", {"class": "house_no"}):
             continue
+        data = {}
         houseon = td.find("font", {"class": "house_no"})
         state = td.find("img")["state"]
         houseID = td.find("img")["houseid"]
@@ -134,7 +138,7 @@ def getAllXiaokongToDisk(projectData):
 
 
 def writeFile(path, content):
-    f = open(path,"w+")
+    f = open(path, "w+")
     f.write(content)
     f.close()
 
@@ -152,36 +156,40 @@ def collectionData(data):
                                                   current_datatime.month, current_datatime.day)
     yestodayPath = ""
     content = ""
-    sendRobot("==========今日{0}年{1}月{2}日楼盘数据==========\n".format(current_datatime.year,
-                                                current_datatime.month, current_datatime.day))
+    sendRobot("=今日{0}年{1}月{2}日楼盘数据=\n".format(current_datatime.year,
+                                                  current_datatime.month, current_datatime.day))
     projectCollection = {}
     for item in data:
         for xk in item["xiaokong"]:
-            ckey = "{0}{1}".format(item["project_name"], item["floor"])
+            ckey = "{0}".format(item["project_name"])
             if ckey not in projectCollection:
-                projectCollection[ckey] = {
+                projectCollection[ckey] = {}
+            if item["floor"] not in projectCollection[ckey]:
+                projectCollection[ckey][item["floor"]] = {
                     "number": 0,
                     "url": "",
                 }
             if xk["state"] == "可售":
-                projectCollection[ckey]["number"] = projectCollection[ckey]["number"] + 1    # 读取并比对现在的数据
-                projectCollection[ckey]["url"] = item["detail_url"] 
-    [(k,projectCollection[k]) for k in sorted(projectCollection.keys())]
+                # 读取并比对现在的数据
+                projectCollection[ckey][item["floor"]]["number"] += 1
+                projectCollection[ckey][item["floor"]]["url"] = item["detail_url"]
+    [(k, projectCollection[k]) for k in sorted(projectCollection.keys())]
     for key in projectCollection.keys():
-        if projectCollection[key]["number"] == 0:
-            continue
-        content+="# [{0}]({1}) \n可售套数{2}\n".format(key,projectCollection[key]["url"],projectCollection[key]["number"])
-        if sys.getsizeof(content) >= 3500:
-            content = "今日{0}年{1}月{2}日楼盘数据\n".format(current_datatime.year,
-                                                  current_datatime.month, current_datatime.day) + content
-            sendRobot(content=content)
-            content = ""
+        content += "# {0}\n".format(key)
+        for fkey in projectCollection[key].keys():
+            item = projectCollection[key][fkey]
+            if item["number"] == 0:
+                continue
+            content += "[{0}](1) {2}\n".format(fkey,item["url"], item["number"])
+            if sys.getsizeof(content) >= 3500:
+                content = "今日{0}年{1}月{2}日楼盘数据\n".format(current_datatime.year,
+                                                        current_datatime.month, current_datatime.day) + content
+                sendRobot(content=content)
+                content = ""
     if content != "":
         content = "今日{0}年{1}月{2}日楼盘数据\n".format(current_datatime.year,
                                                 current_datatime.month, current_datatime.day) + content
         sendRobot(content=content)
-    sendRobot("==========今日{0}年{1}月{2}日楼盘数据==========\n".format(current_datatime.year,
-                                                current_datatime.month, current_datatime.day))
     if os.path.exists(yestodayPath):
         yestodayData = json.loads(readFile(yestodayPath))
     # 写入今天的数据
