@@ -32,7 +32,7 @@ def xslpAllLink():
         totelPageNumber = searchObj[0]
         print("开始解析现售楼盘列表......\n")
         print("共{0}页\n".format(totelPageNumber))
-        # totelPageNumber = 2
+        #totelPageNumber = 2
         for pageNumber in range(1, int(totelPageNumber)):
             print("解析第{0}页\n".format(pageNumber))
             page = requests.post(url, {
@@ -180,7 +180,7 @@ def collectionData(data):
             item = projectCollection[key][fkey]
             if item["number"] == 0:
                 continue
-            content += "[{0}](1) {2}\n".format(fkey,item["url"], item["number"])
+            content += "[{0}]({1}) {2}\n".format(fkey,item["url"], item["number"])
             if sys.getsizeof(content) >= 3500:
                 content = "今日{0}年{1}月{2}日楼盘数据\n".format(current_datatime.year,
                                                         current_datatime.month, current_datatime.day) + content
