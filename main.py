@@ -126,9 +126,23 @@ def getXiaokong(text):
         else:
             data['state'] = "未知状态"
         data["houseID"] = houseID
-        result.append(data)
+        if isRightRoomInfomation(houseID):
+            result.append(data)
     return result
 
+def isRightRoomInfomation(houseID):
+    url = "https://www.dywfdcxy.cn/website/house.jsp?id={0}&lcStr=0".format(houseID)
+    page = requests.get(url)
+    soup = BeautifulSoup(page.text, "html.parser")
+    allTh = soup.find_all("th",{"align":"right"})
+    for th in allTh:
+        if "实测面积" in th.text:
+            area = th.parent.find_all("td")
+            if len(area) != 2:
+                continue
+            if float(area[1].text.strip()) > 85.1 and float(area[1].text.strip()) < 150.1:
+                return True
+    return False
 
 def getAllXiaokongToDisk(projectData):
     for item in range(len(projectData)):
