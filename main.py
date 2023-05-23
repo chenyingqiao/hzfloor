@@ -32,7 +32,7 @@ def xslpAllLink():
         totelPageNumber = searchObj[0]
         print("开始解析现售楼盘列表......\n")
         print("共{0}页\n".format(totelPageNumber))
-        #totelPageNumber = 2
+        totelPageNumber = 2
         for pageNumber in range(1, int(totelPageNumber)):
             print("解析第{0}页\n".format(pageNumber))
             page = requests.post(url, {
@@ -126,23 +126,25 @@ def getXiaokong(text):
         else:
             data['state'] = "未知状态"
         data["houseID"] = houseID
-        if isRightRoomInfomation(houseID):
-            result.append(data)
     return result
 
 def isRightRoomInfomation(houseID):
     url = "https://www.dywfdcxy.cn/website/house.jsp?id={0}&lcStr=0".format(houseID)
-    page = requests.get(url)
-    soup = BeautifulSoup(page.text, "html.parser")
-    allTh = soup.find_all("th",{"align":"right"})
-    for th in allTh:
-        if "实测面积" in th.text:
-            area = th.parent.find_all("td")
-            if len(area) != 2:
-                continue
-            if float(area[1].text.strip()) > 85.1 and float(area[1].text.strip()) < 150.1:
-                return True
-    return False
+    try:
+        page = requests.get(url)
+        soup = BeautifulSoup(page.text, "html.parser")
+        allTh = soup.find_all("th",{"align":"right"})
+        for th in allTh:
+            if "实测面积" in th.text:
+                area = th.parent.find_all("td")
+                if len(area) != 2:
+                    continue
+                if float(area[1].text.strip()) > 85.1 and float(area[1].text.strip()) < 150.1:
+                    return True
+        return False
+    except:
+        print("请求{}错误".format(url))
+        return True
 
 def getAllXiaokongToDisk(projectData):
     for item in range(len(projectData)):
@@ -194,8 +196,10 @@ def collectionData(data):
             item = projectCollection[key][fkey]
             if item["number"] == 0:
                 continue
+            if not isRightRoomInfomation(item["houseID"]):
+                continue
             content += "[{0}]({1}) 剩下{2}间房\n".format(fkey,item["url"], item["number"])
-            if sys.getsizeof(content) >= 3500:
+            if sys.getsizeof(content) >= 35000:
                 content = "今日{0}年{1}月{2}日楼盘数据\n".format(current_datatime.year,
                                                         current_datatime.month, current_datatime.day) + content
                 sendRobot(content=content)
