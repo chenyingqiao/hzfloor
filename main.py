@@ -32,7 +32,7 @@ def xslpAllLink():
         totelPageNumber = searchObj[0]
         print("开始解析现售楼盘列表......\n")
         print("共{0}页\n".format(totelPageNumber))
-        # totelPageNumber = 2
+        totelPageNumber = 2
         for pageNumber in range(1, int(totelPageNumber)):
             print("解析第{0}页\n".format(pageNumber))
             page = requests.post(url, {
@@ -126,10 +126,10 @@ def getXiaokong(text):
         else:
             data['state'] = "未知状态"
         data["houseID"] = houseID
-        result.append(data)
     return result
 
 def isRightRoomInfomation(houseID):
+    print("请求面积数据{}\n".format(houseID))
     url = "https://www.dywfdcxy.cn/website/house.jsp?id={0}&lcStr=0".format(houseID)
     try:
         page = requests.get(url)
@@ -149,8 +149,11 @@ def isRightRoomInfomation(houseID):
 
 def getAllXiaokongToDisk(projectData):
     for item in range(len(projectData)):
-        page = requests.get(projectData[item]["detail_url"])
-        projectData[item]["xiaokong"] = getXiaokong(page.text)
+        try:
+            page = requests.get(projectData[item]["detail_url"])
+            projectData[item]["xiaokong"] = getXiaokong(page.text)
+        except:
+            continue
     return projectData
 
 
@@ -190,7 +193,6 @@ def collectionData(data):
                 # 读取并比对现在的数据
                 projectCollection[ckey][item["floor"]]["number"] += 1
                 projectCollection[ckey][item["floor"]]["url"] = item["detail_url"]
-                projectCollection[ckey][item["floor"]]["houseID"] = xk["houseID"]
     [(k, projectCollection[k]) for k in sorted(projectCollection.keys())]
     for key in projectCollection.keys():
         content += "# {0}\n".format(key)
