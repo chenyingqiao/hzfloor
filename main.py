@@ -126,6 +126,7 @@ def getXiaokong(text):
         else:
             data['state'] = "未知状态"
         data["houseID"] = houseID
+        result.append(data)
     return result
 
 def isRightRoomInfomation(houseID):
@@ -189,6 +190,7 @@ def collectionData(data):
                 # 读取并比对现在的数据
                 projectCollection[ckey][item["floor"]]["number"] += 1
                 projectCollection[ckey][item["floor"]]["url"] = item["detail_url"]
+                projectCollection[ckey][item["floor"]]["houseID"] = xk["houseID"]
     [(k, projectCollection[k]) for k in sorted(projectCollection.keys())]
     for key in projectCollection.keys():
         content += "# {0}\n".format(key)
